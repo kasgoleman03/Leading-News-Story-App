@@ -194,12 +194,16 @@ The only one you actually need to set is `THENEWSAPI_KEY` in `proxy/.env`.
 
 | Variable | Lives in | Purpose | Default |
 |---|---|---|---|
-| `THENEWSAPI_KEY` | `proxy/.env` | TheNewsAPI access token. Server-only. | *(required)* |
-| `PROXY_PORT` | `proxy/.env` | Express listen port. | `4000` |
-| `SCORER_URL` | `proxy/.env` | Where the proxy reaches the Go service. | `http://localhost:4100` |
-| `ALLOWED_ORIGINS` | `proxy/.env` | CORS allowlist for the proxy. | `http://localhost:5173` |
-| `SCORER_PORT` | shell / `services/.env` | Go scorer listen port. | `4100` |
-| `VITE_API_BASE_URL` | client env | Override Vite's dev proxy target. | `http://localhost:4000` |
+| `THENEWSAPI_KEY` | `proxy/.env` (local) **and** Vercel env (prod) | TheNewsAPI access token. Server-only. | *(required)* |
+| `PROXY_PORT` | `proxy/.env` | Express listen port (local only). | `4000` |
+| `SCORER_URL` | `proxy/.env` | Where the proxy reaches the Go service (local only). | `http://localhost:4100` |
+| `ALLOWED_ORIGINS` | `proxy/.env` | CORS allowlist for the proxy (local only). | `http://localhost:5173` |
+| `SCORER_PORT` | shell / `services/.env` | Go scorer listen port (local only). | `4100` |
+| `VITE_API_BASE_URL` | client env | Override Vite's dev proxy target (local only). | `http://localhost:4000` |
+
+In production on Vercel, the only variable that matters is `THENEWSAPI_KEY`,
+set via `vercel env add` or the dashboard. Everything else is for the
+multi-process local dev stack.
 
 ---
 
@@ -210,8 +214,10 @@ news-reader/
 ├── client/                    # React + Vite + TS app
 │   ├── src/
 │   │   ├── components/        # NewsCard, SkeletonCard, CategoryFilter,
-│   │   │                      # BookmarkBadge, DarkModeToggle
-│   │   ├── hooks/             # useFetchNews, useBookmarks, useDarkMode
+│   │   │                      # BookmarkBadge, DarkModeToggle, SearchBar,
+│   │   │                      # SavedStoriesPanel
+│   │   ├── hooks/             # useFetchNews, useBookmarks, useDarkMode,
+│   │   │                      # useSearch
 │   │   ├── utils/             # readingTime, shareStory, timeAgo
 │   │   ├── styles/            # global.css, variables.css (design tokens)
 │   │   ├── App.tsx
@@ -219,22 +225,120 @@ news-reader/
 │   ├── index.html
 │   ├── vite.config.ts
 │   └── package.json
-├── proxy/                     # Express proxy (thin)
+├── proxy/                     # Express proxy (local dev only)
 │   ├── server.js
 │   ├── package.json
 │   └── .env.example
-├── services/                  # Go scorer + summarizer
+├── services/                  # Go scorer + summarizer (local dev only)
 │   ├── cmd/scorer/main.go
 │   ├── internal/scoring/relevance.go
 │   ├── internal/summarizer/whythisstory.go
 │   └── go.mod
+├── api/                       # Vercel serverless functions (production)
+│   ├── top-stories.ts         # GET /api/top-stories
+│   ├── search.ts              # GET /api/search
+│   └── _lib/                  # shared lib (underscore = not a route)
+│       ├── scoring.ts         # TS port of services/internal/scoring
+│       ├── summarizer.ts      # TS port of services/internal/summarizer
+│       ├── thenewsapi.ts      # upstream fetch + category whitelist
+│       └── types.ts
 ├── scripts/
 │   ├── setup.sh / setup.ps1
 │   └── dev.sh   / dev.ps1
+├── vercel.json                # Vercel build + functions config
+├── package.json               # root deps for /api functions
+├── tsconfig.json              # root tsconfig for /api functions
 ├── .gitignore
 ├── .env.example
 └── README.md
 ```
+
+---
+
+## Deploying to Vercel
+
+The repo ships with two parallel backend implementations:
+
+| Environment | Stack | Lives in |
+|---|---|---|
+| **Local dev** | Vite + Express proxy + Go scorer | `client/`, `proxy/`, `services/` |
+| **Production (Vercel)** | Vite + TypeScript serverless functions | `client/`, `api/` |
+
+This isn't an accident — it's the design tradeoff. Vercel's Go runtime is in
+maintenance mode, and running a long-lived Go process plus a separate
+host (Render/Fly) just to ship a daily-news demo costs more in moving
+parts than it earns in correctness. The Vercel production path keeps the
+backend in a single Node process, eliminating an entire class of
+cross-process bugs (cold-start coordination, JSON serialization mismatches,
+HTTP timeouts between functions). The Go service stays in the repo as
+the original architectural reference and the local dev experience —
+recruiters can see *both* and read the rationale here.
+
+The TypeScript ports in [api/_lib/scoring.ts](api/_lib/scoring.ts) and
+[api/_lib/summarizer.ts](api/_lib/summarizer.ts) are line-for-line mirrors
+of the Go originals (same constants, same weights, same algorithms), so
+the user-visible behavior is identical between the two stacks.
+
+### Steps
+
+1. **Install the Vercel CLI once**
+
+   ```bash
+   npm i -g vercel
+   ```
+
+2. **Link the repo to a Vercel project**
+
+   From the project root:
+
+   ```bash
+   vercel link
+   ```
+
+   Pick or create a project when prompted. Vercel detects the `vercel.json`
+   and uses it directly — no dashboard fiddling required.
+
+3. **Add the API key as an environment variable**
+
+   ```bash
+   vercel env add THENEWSAPI_KEY
+   ```
+
+   Paste your TheNewsAPI key, then apply it to **Production**,
+   **Preview**, and **Development** when prompted. The key only lives in
+   Vercel's encrypted env store and is exposed only to the serverless
+   functions at runtime.
+
+4. **Deploy**
+
+   ```bash
+   vercel --prod
+   ```
+
+   Or push to your linked Git branch and let Vercel auto-deploy. You'll
+   get a `*.vercel.app` URL once the build finishes (~1 min).
+
+### Local Vercel preview
+
+If you want to test the production-shaped stack offline before deploying:
+
+```bash
+vercel dev
+```
+
+This boots the Vercel runtime against the local `/api` functions and
+serves the built client at `http://localhost:3000`. It's slower than the
+regular `scripts/dev.ps1` but exercises the exact code path Vercel
+runs in production. You'll need `THENEWSAPI_KEY` in a local `.env`
+(or pulled down via `vercel env pull`).
+
+### What Vercel does on each deploy
+
+1. Runs `npm install` at the project root (installs `@vercel/node` types).
+2. Runs `cd client && npm install && npm run build` (builds the React app).
+3. Serves `client/dist` as the static origin from the global edge.
+4. Auto-deploys `api/*.ts` as Node serverless functions at `/api/*`.
+5. Routes any non-API request to `index.html` so the SPA loads on every URL.
 
 ---
 
