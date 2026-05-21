@@ -1,0 +1,109 @@
+/*
+ * Design tokens.
+ *
+ * Light mode is the default. Dark mode flips the same token names so every
+ * component just references --bg / --fg / etc. and the right theme applies.
+ *
+ * The `data-theme` attribute is set on <html> by the useDarkMode hook
+ * (user override) OR inherited from `prefers-color-scheme` via the media
+ * query at the bottom.
+ */
+
+:root {
+  /* Color — light */
+  --bg: #f7f7f5;
+  --bg-elev: #ffffff;
+  --bg-elev-2: #ffffff;
+  --fg: #0b0d12;
+  --fg-muted: #5a6473;
+  --fg-subtle: #8a93a3;
+  --border: rgba(11, 13, 18, 0.08);
+  --border-strong: rgba(11, 13, 18, 0.14);
+  --accent: #ef4444;
+  --accent-fg: #ffffff;
+  --accent-soft: rgba(239, 68, 68, 0.1);
+  --success: #16a34a;
+  --shadow-sm: 0 1px 2px rgba(11, 13, 18, 0.05),
+    0 1px 3px rgba(11, 13, 18, 0.06);
+  --shadow-md: 0 4px 10px rgba(11, 13, 18, 0.06),
+    0 12px 24px rgba(11, 13, 18, 0.08);
+  --shadow-lg: 0 8px 30px rgba(11, 13, 18, 0.12);
+
+  /* Spacing — a constrained scale on purpose */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* Radii */
+  --radius-sm: 6px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-pill: 999px;
+
+  /* Type */
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI',
+    Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif;
+  --font-serif:
+    'Iowan Old Style', 'Apple Garamond', 'Palatino Linotype', Georgia, serif;
+
+  /* Layout */
+  --max-w: 1120px;
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 140ms;
+  --dur-med: 280ms;
+  --dur-slow: 520ms;
+}
+
+/* Manual dark mode — set by JS on <html data-theme="dark"> */
+[data-theme='dark'] {
+  --bg: #0b0d12;
+  --bg-elev: #131722;
+  --bg-elev-2: #1a2030;
+  --fg: #f3f5f9;
+  --fg-muted: #a3acbe;
+  --fg-subtle: #6c7689;
+  --border: rgba(255, 255, 255, 0.07);
+  --border-strong: rgba(255, 255, 255, 0.13);
+  --accent: #f87171;
+  --accent-fg: #0b0d12;
+  --accent-soft: rgba(248, 113, 113, 0.14);
+  --success: #34d399;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35),
+    0 16px 32px rgba(0, 0, 0, 0.45);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.55);
+}
+
+/*
+ * System-preference fallback: if the user hasn't set a manual preference
+ * (i.e. <html> has no data-theme attribute), follow the OS.
+ */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme]) {
+    --bg: #0b0d12;
+    --bg-elev: #131722;
+    --bg-elev-2: #1a2030;
+    --fg: #f3f5f9;
+    --fg-muted: #a3acbe;
+    --fg-subtle: #6c7689;
+    --border: rgba(255, 255, 255, 0.07);
+    --border-strong: rgba(255, 255, 255, 0.13);
+    --accent: #f87171;
+    --accent-fg: #0b0d12;
+    --accent-soft: rgba(248, 113, 113, 0.14);
+    --success: #34d399;
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.35),
+      0 16px 32px rgba(0, 0, 0, 0.45);
+    --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.55);
+  }
+}
