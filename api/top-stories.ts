@@ -15,10 +15,10 @@
 // =============================================================================
 
 import type { VercelRequest, VercelResponse } from '@vercel/node';
-import { ApiError, fetchNewsPool, normalizeCategory } from './_lib/thenewsapi';
-import { rank } from './_lib/scoring';
-import { generate } from './_lib/summarizer';
-import type { TopStoriesResponse } from './_lib/types';
+import { ApiError, fetchNewsPool, normalizeCategory } from './_lib/thenewsapi.js';
+import { rank } from './_lib/scoring.js';
+import { generate } from './_lib/summarizer.js';
+import type { TopStoriesResponse } from './_lib/types.js';
 
 const TOP_N = 3;
 

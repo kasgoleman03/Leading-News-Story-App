@@ -7,7 +7,7 @@
 // enforced in one spot.
 // =============================================================================
 
-import type { Story } from './types';
+import type { Story } from './types.js';
 
 const NEWS_API_URL = 'https://api.thenewsapi.com/v1/news/all';
 

@@ -17,7 +17,7 @@
 // swap the body of generate() for a network call and keep the same signature.
 // =============================================================================
 
-import type { Scored } from './types';
+import type { Scored } from './types.js';
 
 /**
  * Returns a single-sentence explanation of why this story matters, based

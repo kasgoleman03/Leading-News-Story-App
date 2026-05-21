@@ -19,7 +19,7 @@
 // local dev experience matches what Vercel serves in production.
 // =============================================================================
 
-import type { Story, Scored } from './types';
+import type { Story, Scored } from './types.js';
 
 // ------- weights & thresholds (must mirror relevance.go) ---------------------
 

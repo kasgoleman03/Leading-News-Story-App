@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "private": true,
   "description": "Root package.json for the Vercel deployment. Holds dependencies for the /api serverless functions only — the client has its own package.json under /client.",
+  "type": "module",
   "scripts": {
     "typecheck": "tsc -p tsconfig.json --noEmit",
     "vercel:dev": "vercel dev",

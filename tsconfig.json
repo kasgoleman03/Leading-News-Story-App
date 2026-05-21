@@ -3,15 +3,15 @@
     "target": "ES2022",
     "lib": ["ES2022"],
     /*
-     * CommonJS output is the most reliable runtime format for Vercel's
-     * @vercel/node serverless functions. The root package.json has no
-     * "type": "module" field, so Node loads compiled .js files as CJS by
-     * default. Matching the two avoids the "Cannot use import statement
-     * outside a module" runtime error that surfaces when tsconfig emits
-     * ESM but package.json says CJS.
+     * NodeNext + "type": "module" in package.json is the modern ESM TS
+     * setup that maps 1:1 to how Node (and Vercel's @vercel/node esbuild
+     * pipeline) actually loads files at runtime. Relative imports must
+     * carry explicit .js extensions — TypeScript understands `./foo.js`
+     * to mean "the .ts file that compiles to foo.js", and Node's ESM
+     * resolver then finds the right .js at runtime without surprises.
      */
-    "module": "CommonJS",
-    "moduleResolution": "node",
+    "module": "NodeNext",
+    "moduleResolution": "NodeNext",
 
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
