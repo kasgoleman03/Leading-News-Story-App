@@ -2,8 +2,16 @@
   "compilerOptions": {
     "target": "ES2022",
     "lib": ["ES2022"],
-    "module": "ESNext",
-    "moduleResolution": "bundler",
+    /*
+     * CommonJS output is the most reliable runtime format for Vercel's
+     * @vercel/node serverless functions. The root package.json has no
+     * "type": "module" field, so Node loads compiled .js files as CJS by
+     * default. Matching the two avoids the "Cannot use import statement
+     * outside a module" runtime error that surfaces when tsconfig emits
+     * ESM but package.json says CJS.
+     */
+    "module": "CommonJS",
+    "moduleResolution": "node",
 
     "allowSyntheticDefaultImports": true,
     "esModuleInterop": true,
