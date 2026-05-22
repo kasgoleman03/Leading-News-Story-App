@@ -1,4 +1,0 @@
-{
-  "//": "This package.json exists for a single reason: Node's 'nearest package.json' rule needs an unambiguous signal that the bundled api/*.js files are ESM. The root package.json sets the same flag, but Vercel sometimes injects its own package.json into the function deployment directory which would shadow the root setting. Putting this here guarantees the nearest match.",
-  "type": "module"
-}

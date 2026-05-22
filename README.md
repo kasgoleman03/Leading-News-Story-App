@@ -235,19 +235,13 @@ news-reader/
 │   ├── internal/summarizer/whythisstory.go
 │   └── go.mod
 ├── api/                       # Vercel serverless functions (production)
-│   ├── top-stories.ts         # GET /api/top-stories
-│   ├── search.ts              # GET /api/search
-│   └── _lib/                  # shared lib (underscore = not a route)
-│       ├── scoring.ts         # TS port of services/internal/scoring
-│       ├── summarizer.ts      # TS port of services/internal/summarizer
-│       ├── thenewsapi.ts      # upstream fetch + category whitelist
-│       └── types.ts
+│   ├── top-stories.js         # GET /api/top-stories  (self-contained CJS)
+│   └── search.js              # GET /api/search       (self-contained CJS)
 ├── scripts/
 │   ├── setup.sh / setup.ps1
 │   └── dev.sh   / dev.ps1
 ├── vercel.json                # Vercel build + functions config
-├── package.json               # root deps for /api functions
-├── tsconfig.json              # root tsconfig for /api functions
+├── package.json               # root metadata for Vercel
 ├── .gitignore
 ├── .env.example
 └── README.md
@@ -262,7 +256,7 @@ The repo ships with two parallel backend implementations:
 | Environment | Stack | Lives in |
 |---|---|---|
 | **Local dev** | Vite + Express proxy + Go scorer | `client/`, `proxy/`, `services/` |
-| **Production (Vercel)** | Vite + TypeScript serverless functions | `client/`, `api/` |
+| **Production (Vercel)** | Vite + Node serverless functions | `client/`, `api/` |
 
 This isn't an accident — it's the design tradeoff. Vercel's Go runtime is in
 maintenance mode, and running a long-lived Go process plus a separate
@@ -274,10 +268,17 @@ HTTP timeouts between functions). The Go service stays in the repo as
 the original architectural reference and the local dev experience —
 recruiters can see *both* and read the rationale here.
 
-The TypeScript ports in [api/_lib/scoring.ts](api/_lib/scoring.ts) and
-[api/_lib/summarizer.ts](api/_lib/summarizer.ts) are line-for-line mirrors
-of the Go originals (same constants, same weights, same algorithms), so
-the user-visible behavior is identical between the two stacks.
+**Why the production functions are plain `.js`, not TypeScript.** The
+inlined CommonJS files in `api/*.js` are line-for-line ports of the Go
+originals in `services/` (same constants, same weights, same algorithms),
+intentionally written as single-file CommonJS modules with no relative
+imports. Vercel's `@vercel/node` bundler has well-documented edge cases
+where the module-format signal (ESM vs CJS) ends up disagreeing between
+the bundler's output and Node's loader — the safest and most maintainable
+fix is to skip the bundler's TS pipeline entirely. Each `.js` file
+includes everything the function needs in ~270 lines and Node can load
+it unambiguously as CommonJS. The canonical source of truth for the
+algorithms remains the Go code in `services/`.
 
 ### Steps
 
@@ -334,10 +335,11 @@ runs in production. You'll need `THENEWSAPI_KEY` in a local `.env`
 
 ### What Vercel does on each deploy
 
-1. Runs `npm install` at the project root (installs `@vercel/node` types).
+1. Runs `npm install` at the project root (no-op — no root deps).
 2. Runs `cd client && npm install && npm run build` (builds the React app).
 3. Serves `client/dist` as the static origin from the global edge.
-4. Auto-deploys `api/*.ts` as Node serverless functions at `/api/*`.
+4. Picks up `api/*.js` directly as Node serverless functions at `/api/*`
+   — no bundling, no transpile step. Node's CJS loader handles them as-is.
 5. Routes any non-API request to `index.html` so the SPA loads on every URL.
 
 ---

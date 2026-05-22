@@ -2,17 +2,10 @@
   "name": "news-reader",
   "version": "1.0.0",
   "private": true,
-  "description": "Root package.json for the Vercel deployment. Holds dependencies for the /api serverless functions only — the client has its own package.json under /client.",
-  "type": "module",
+  "description": "Root package.json exists only for Vercel. The /api functions are plain CommonJS JavaScript (api/top-stories.js, api/search.js). The canonical reference for the scoring + summarizer algorithms is the Go code in /services. The client has its own package.json under /client.",
   "scripts": {
-    "typecheck": "tsc -p tsconfig.json --noEmit",
     "vercel:dev": "vercel dev",
     "vercel:deploy": "vercel --prod"
-  },
-  "devDependencies": {
-    "@types/node": "^20.14.10",
-    "@vercel/node": "^3.2.24",
-    "typescript": "^5.5.3"
   },
   "engines": {
     "node": ">=18"
