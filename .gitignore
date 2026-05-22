@@ -44,3 +44,5 @@ coverage/
 
 # Vercel (local CLI metadata)
 .vercel/
+.vercel
+.env*
